@@ -1,0 +1,40 @@
+#!/bin/sh
+#
+# /usr/local/bin/wikijs - wrapper that cd's into %%WWWDIR%% and exec's
+# `node server --config`. Installed by the FreeBSD port. The rc.d script
+# invokes this wrapper under daemon(8) with HOME / TMPDIR / NODE_OPTIONS
+# / WIKIJS_CONFIG_PATH already set; we only need to make sure the working
+# directory is correct so that server/index.js can resolve ROOTPATH and
+# SHAREPATH, and pass the explicit config path.
+#
+# Usage (manual):
+#
+#   /usr/local/bin/wikijs            # default: config from
+#                                    # %%PREFIX%%/etc/wikijs/config.yml
+#   /usr/local/bin/wikijs --help     # Wiki.js honours "node server --help"
+#
+
+set -eu
+
+WWWDIR="%%WWWDIR%%"
+NODE="%%LOCALBASE%%/bin/node"
+
+# Wiki.js reads its config path from the CONFIG_FILE env var (see
+# server/core/config.js).  Default to %%PREFIX%%/etc/wikijs/config.yml
+# so the rc.d script and ad-hoc invocations from the same shell both
+# work out of the box.
+: "${CONFIG_FILE:=%%PREFIX%%/etc/wikijs/config.yml}"
+export CONFIG_FILE
+
+if [ ! -d "${WWWDIR}" ]; then
+	echo "${0##*/}: ${WWWDIR} not found; is the wikijs port installed?" >&2
+	exit 1
+fi
+
+if [ ! -x "${NODE}" ]; then
+	echo "${0##*/}: ${NODE} not found; install www/node${NODEJS_VERSION:-24}." >&2
+	exit 1
+fi
+
+cd "${WWWDIR}"
+exec "${NODE}" server "$@"

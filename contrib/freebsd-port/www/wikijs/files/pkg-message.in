@@ -1,0 +1,52 @@
+[
+{ type: install
+  message: <<EOM
+Wiki.js has been installed.
+
+  Install layout:
+    %%WWWDIR%%                          application source + node_modules
+    %%WIKIJS_ETC_DIR%%                  configuration (config.sample.yml here)
+    %%WIKIJS_DATA_DIR%%                 runtime data (sqlite db, uploads, etc.)
+    %%WIKIJS_LOG_DIR%%                  log files
+    %%WIKIJS_RUN_DIR%%                  pidfile
+
+Quick start:
+
+  1.  Copy the sample config and edit it for your database:
+
+        cp %%WIKIJS_ETC_DIR%%/config.sample.yml %%WIKIJS_ETC_DIR%%/config.yml
+        $EDITOR %%WIKIJS_ETC_DIR%%/config.yml
+
+      The default config uses SQLite at /var/db/wikijs/data/wiki.sqlite,
+      which requires no external services.  Set db.type, db.host, db.user
+      etc. for PostgreSQL / MySQL / MariaDB / MSSQL.
+
+  2.  Enable and start the service:
+
+        sysrc wikijs_enable=YES
+        service wikijs start
+
+      Optional rc.conf knobs: wikijs_listen_host, wikijs_listen_port,
+      wikijs_extra_env, wikijs_extra_args -- see the top of
+      %%PREFIX%%/etc/rc.d/wikijs for the full list.
+
+  3.  Browse to http://<server>:3000/ to complete the setup wizard.
+
+  4.  (Recommended) enable log rotation.  Drop this line into
+      /etc/newsyslog.conf:
+
+        Include %%PREFIX%%/etc/wikijs/newsyslog.conf.sample
+
+Maintenance:
+
+  Logs:        tail -F %%WIKIJS_LOG_DIR%%/wikijs.log
+  Reload:      service wikijs reload   # SIGHUP -- re-read config
+  Status:      service wikijs status
+  Upgrade:     pkg upgrade wikijs      # rebuilds native modules on FreeBSD
+
+Wiki.js listens on /var/db/wikijs as $WIKIJS_USER.  All runtime data
+(uploads, sqlite db, etc.) lives under /var/db/wikijs -- back it up.
+
+EOM
+}
+]

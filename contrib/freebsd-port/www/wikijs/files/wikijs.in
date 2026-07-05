@@ -1,0 +1,173 @@
+#!/bin/sh
+#
+# PROVIDE: wikijs
+# REQUIRE: LOGIN NETWORKING
+# KEYWORD: shutdown
+#
+# Add the following to /etc/rc.conf to enable Wiki.js:
+#
+#   wikijs_enable="YES"
+#
+# Optional settings (defaults shown):
+#
+#   wikijs_run_user="wikijs"
+#   wikijs_run_group="wikijs"
+#   wikijs_config="/usr/local/etc/wikijs/config.yml"
+#   wikijs_data_dir="/var/db/wikijs"
+#   wikijs_log_dir="/var/log/wikijs"
+#   wikijs_run_dir="/var/run/wikijs"
+#   wikijs_listen_host="0.0.0.0"     # informational only; bind happens in
+#                                    # config.yml.  Set there for the real
+#                                    # value to take effect.
+#   wikijs_listen_port="3000"        # informational only; same as above.
+#   wikijs_node_options="--openssl-legacy-provider"
+#   wikijs_tmpdir="/tmp"
+#   wikijs_extra_env=""              # extra KEY=VALUE pairs (whitespace sep)
+#   wikijs_extra_args=""             # extra CLI args to "node server"
+#
+# NOTE on variable names: rc.subr auto-wraps the command in
+# `su -m ${name}_user -c 'sh -c "..."'` whenever `${name}_user` and
+# `${name}_group` are set.  We use `wikijs_run_user` / `wikijs_run_group`
+# instead so that daemon(8)'s own `-u` flag (which uses setusercontext(3)
+# with LOGIN_SETALL) handles the privilege drop.  Stacking an su wrap on
+# top of that breaks environment propagation -- see PR / discussion.
+#
+# Example:
+#
+#   wikijs_enable="YES"
+#   wikijs_listen_host="127.0.0.1"
+#   wikijs_extra_env="MAX_UPLOAD_SIZE=50m LOG_LEVEL=info"
+#
+
+. /etc/rc.subr
+
+name="wikijs"
+rcvar="${name}_enable"
+
+load_rc_config "${name}"
+
+: ${wikijs_enable:="NO"}
+: ${wikijs_run_user:="wikijs"}
+: ${wikijs_run_group:="wikijs"}
+: ${wikijs_config:="/usr/local/etc/wikijs/config.yml"}
+: ${wikijs_data_dir:="/var/db/wikijs"}
+: ${wikijs_log_dir:="/var/log/wikijs"}
+: ${wikijs_run_dir:="/var/run/wikijs"}
+: ${wikijs_listen_host:="0.0.0.0"}
+: ${wikijs_listen_port:="3000"}
+: ${wikijs_node_options:="--openssl-legacy-provider"}
+: ${wikijs_tmpdir:="/tmp"}
+: ${wikijs_extra_env:=""}
+: ${wikijs_extra_args:=""}
+
+# %%PREFIX%%, %%LOCALBASE%%, %%WWWDIR%% are substituted by the port
+# framework via SUB_LIST and SUB_FILES at install time.
+wikijs_prefix="%%PREFIX%%"
+wikijs_localbase="%%LOCALBASE%%"
+wikijs_wwwdir="%%WWWDIR%%"
+wikijs_node="${wikijs_localbase}/bin/node"
+wikijs_command="${wikijs_prefix}/bin/wikijs"   # wrapper installed by the port
+
+pidfile="${wikijs_run_dir}/${name}.pid"
+logfile="${wikijs_log_dir}/${name}.log"
+
+command="/usr/sbin/daemon"
+procname="${wikijs_node}"
+start_precmd="wikijs_prestart"
+stop_postcmd="wikijs_poststop"
+extra_commands="reload status"
+reload_cmd="wikijs_reload"
+status_cmd="wikijs_status"
+
+# --- helpers -------------------------------------------------------------
+
+# Emit a single whitespace-separated string of KEY=VALUE tokens that
+# `env` will interpret. NODE_OPTIONS is only added when non-empty so that
+# operators can clear it entirely (e.g. when the runtime has been ported
+# off the legacy OpenSSL provider).
+wikijs_env_args()
+{
+	local _env _kv
+	_env="HOME=${wikijs_data_dir}"
+	_env="${_env} TMPDIR=${wikijs_tmpdir}"
+	_env="${_env} NODE_ENV=production"
+	# Wiki.js reads its config path from CONFIG_FILE (server/core/config.js).
+	_env="${_env} CONFIG_FILE=${wikijs_config}"
+	if [ -n "${wikijs_node_options}" ]; then
+		_env="${_env} NODE_OPTIONS=${wikijs_node_options}"
+	fi
+	if [ -n "${wikijs_extra_env}" ]; then
+		for _kv in ${wikijs_extra_env}; do
+			_env="${_env} ${_kv}"
+		done
+	fi
+	printf '%s' "${_env}"
+}
+
+# Materialize runtime directories owned by ${wikijs_run_user}:${wikijs_run_group}.
+wikijs_prestart()
+{
+	local d
+	for d in "${wikijs_run_dir}" "${wikijs_log_dir}" \
+	         "${wikijs_data_dir}" "${wikijs_data_dir}/data"; do
+		if [ ! -d "${d}" ]; then
+			install -d -m 0750 -o "${wikijs_run_user}" \
+				-g "${wikijs_run_group}" "${d}" \
+				|| return 1
+		fi
+	done
+	if [ ! -f "${wikijs_config}" ]; then
+		warn "${name}: ${wikijs_config} not found; Wiki.js will start in setup wizard mode"
+	fi
+}
+
+# Clean up the pidfile after a clean shutdown.
+wikijs_poststop()
+{
+	if [ -f "${pidfile}" ]; then
+		rm -f "${pidfile}"
+	fi
+	return 0
+}
+
+# SIGHUP: Wiki.js re-reads its config and reopens log files.
+wikijs_reload()
+{
+	if [ ! -f "${pidfile}" ]; then
+		warn "${name}: not running (no pidfile)"
+		return 1
+	fi
+	run_rc_command status >/dev/null 2>&1 || {
+		warn "${name}: not running"
+		return 1
+	}
+	kill -HUP "$(cat "${pidfile}")"
+}
+
+# Override the default rc.subr status output with something clearer.
+wikijs_status()
+{
+	local pid
+	if [ ! -f "${pidfile}" ]; then
+		echo "${name} is not running."
+		return 1
+	fi
+	pid="$(cat "${pidfile}" 2>/dev/null)"
+	if [ -z "${pid}" ] || ! kill -0 "${pid}" 2>/dev/null; then
+		echo "${name} is not running (stale pidfile at ${pidfile})."
+		return 1
+	fi
+	echo "${name} is running as pid ${pid} (user ${wikijs_run_user}, expected http://${wikijs_listen_host}:${wikijs_listen_port}/)."
+}
+
+# Full daemon(8) command line. Everything after the daemon flags is the
+# program + its argv. We prepend `env` so that HOME / TMPDIR / NODE_OPTIONS
+# are inherited by the Node.js child without us having to teach daemon(8)
+# about them.
+command_args="-f -o ${logfile} -p ${pidfile} -u ${wikijs_run_user} \
+	/usr/bin/env \
+	$(wikijs_env_args) \
+	${wikijs_command} \
+	${wikijs_extra_args}"
+
+run_rc_command "$1"

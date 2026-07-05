@@ -1,0 +1,15 @@
+Wiki.js is a modern, lightweight and powerful wiki app built on Node.js,
+Git, and Markdown. It converts Markdown into a beautiful wiki using
+Git as the storage backend, supports authentication through dozens of
+providers (LDAP, OAuth2, SAML, local, ...), provides fine-grained
+permissions, full-text search, theming, asset management, and an
+extensible module system.
+
+This port installs the Wiki.js application under %%PREFIX%%/www/wikijs,
+ships an rc(8) service script and a wrapper at %%PREFIX%%/bin/wikijs,
+creates a dedicated `wikijs` user, and stores its state (configuration,
+SQLite database, uploads, log files) under /var/db/wikijs and
+/var/log/wikijs.
+
+The package supports SQLite out of the box and can be built against
+PostgreSQL, MySQL, MariaDB, or Microsoft SQL Server via OPTIONS.

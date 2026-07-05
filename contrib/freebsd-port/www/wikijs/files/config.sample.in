@@ -1,0 +1,53 @@
+#######################################################################
+# Wiki.js - CONFIGURATION                                             #
+#######################################################################
+# Full documentation + examples:
+# https://docs.requarks.io/install
+
+# ---------------------------------------------------------------------
+# Port the server should listen to
+# ---------------------------------------------------------------------
+# These two values MUST match what wikijs_listen_host / wikijs_listen_port
+# are set to in /etc/rc.conf. The rc.d script does not (yet) plumb them
+# through; only the *informational* status line uses them.
+port: 3000
+bindIP: 0.0.0.0
+
+# ---------------------------------------------------------------------
+# Database
+# ---------------------------------------------------------------------
+# Supported engines: postgres | mysql | mariadb | mssql | sqlite
+#
+# db:
+#   type: sqlite
+#   storage: /var/db/wikijs/data/wiki.sqlite
+#
+db:
+  type: sqlite
+
+  # PostgreSQL / MySQL / MariaDB / MS SQL Server only:
+  host: localhost
+  port: 5432
+  user: wikijs
+  pass: wikijsrocks
+  db: wiki
+  ssl: false
+
+  # PostgreSQL / MySQL / MariaDB only:
+  sslOptions:
+    auto: true
+    # rejectUnauthorized: false
+    # ca: /path/to/ca.crt
+    # cert: /path/to/cert.crt
+    # key: /path/to/key.pem
+
+  # PostgreSQL only:
+  schema: public
+
+  # SQLite only:
+  storage: /var/db/wikijs/data/wiki.sqlite
+
+#######################################################################
+# ADVANCED OPTIONS                                                    #
+#######################################################################
+# Leave the defaults unless you know what you are doing.
