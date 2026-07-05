@@ -575,9 +575,11 @@ Wave FINAL (parallel, 4 reviews + summary):
   Spot-check after-start.txt shows all 4 verify-actually-running signals; after-stop.txt shows the 2 verify-actually-stopped signals; playwright PNG is non-blank.
   Output: `Files [N/N] | Signals [N/N present/N missing] | VERDICT`
 
-- [ ] F3. shellcheck + bash -n (unspecified-high)
+- [x] F3. shellcheck + bash -n (unspecified-high)
   `shellcheck contrib/freebsd-port/scripts/regression.sh` and `bash -n`; verify strict mode (`set -euo pipefail`), no `eval`, no `rm -rf /`.
   Output: `Lint [N/N clean] | Strict [yes/no] | VERDICT`
+
+  **DONE**: `bash -n regression.sh` exit 0; `shellcheck -S error regression.sh` exit 0 (only 2 SC2329 info notes about helper-function invocation form, both false positives since host_run/host_sudo are called by other functions via `$(host_run "...")` command substitution); `set -euo pipefail` present on line 2; 0 `eval`; 0 `rm -rf /`.
 
 - [x] F4. SUMMARY.md synthesis (deep)
   Generate `.omo/evidence/regression/SUMMARY.md` from the per-round evidence:
