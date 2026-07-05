@@ -1,0 +1,40 @@
+wikijs-2.5.314
+Name           : wikijs
+Version        : 2.5.314
+Origin         : www/wikijs
+Architecture   : FreeBSD:16:amd64
+Prefix         : /usr/local
+Categories     : www
+Licenses       : AGPLv3
+Maintainer     : mark@cloudbsd.org
+WWW            : https://js.wiki/
+Comment        : Modern, lightweight and powerful wiki app built on Node.js
+Options        :
+	MARIADB        : off
+	PGSQL          : off
+	SQLITE         : on
+Shared Libs required:
+	libc++.so.1
+	libc.so.7
+	libcxxrt.so.1
+	libgcc_s.so.1
+	libm.so.5
+	libthr.so.3
+Annotations    :
+	FreeBSD_version: 1600019
+Flat size      : 630MiB
+Description    :
+Wiki.js is a modern, lightweight and powerful wiki app built on Node.js,
+Git, and Markdown. It converts Markdown into a beautiful wiki using
+Git as the storage backend, supports authentication through dozens of
+providers (LDAP, OAuth2, SAML, local, ...), provides fine-grained
+permissions, full-text search, theming, asset management, and an
+extensible module system.
+
+This port installs the Wiki.js application under %%PREFIX%%/www/wikijs,
+ships an rc(8) service script and a wrapper at %%PREFIX%%/bin/wikijs,
+creates a dedicated `wikijs` user, and stores its state (configuration,
+SQLite database, uploads, log files) under /var/db/wikijs and
+/var/log/wikijs.
+
+The package supports SQLite out of the box and can be built against

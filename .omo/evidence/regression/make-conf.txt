@@ -1,0 +1,6 @@
+# ~/.make.conf -- mlapointe user-local build defaults
+# (system /etc/make.conf is owned by root and mlapointe cannot write to it)
+# This file is sourced by bsd.port.mk after /etc/make.conf.
+
+DEFAULT_VERSIONS+=postgresql=16
+DEFAULT_VERSIONS+=mariadb=11.4
