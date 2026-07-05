@@ -1,0 +1,17 @@
+===AFTER-START===
+Captured at 2026-07-05 ~22:00 UTC
+ROUND STATE: PARTIAL — service was already running from prior session, NOT started by this round
+Cannot stop service (host sudo broken); this evidence shows running-state confirmation only
+
+---ps for PID 13143---
+  PID  PPID USER   STAT  ELAPSED COMMAND
+13143 13142 wikijs    S 09:13:50 /usr/local/bin/node server
+
+---sockstat port 3000---
+wikijs  node       13143 15 tcp4  *:3000                *:*                  
+
+---curl---
+http_code=200 time=0.001230s
+
+---curl wikijs.cloudbsd.org---
+http_code=200 time=0.036368s

@@ -1,0 +1,35 @@
+===BEFORE-START===
+Captured at 2026-07-05 ~22:00 UTC
+Pre-state: wikijs installed and running from PRIOR SESSION (Jul 5 07:33 CDT)
+Service was NOT started by this round; pre-existing service running as PID 13143
+
+---ps state---
+wikijs    13143   0.0  0.6 1136332 100192  -  S    07:33      0:03.66 /usr/local/bin/node server
+
+---sockstat---
+USER    COMMAND      PID FD PROTO LOCAL ADDRESS         FOREIGN ADDRESS      
+wikijs  node       13143 15 tcp4  *:3000                *:*                  
+www     nginx      65335  6 tcp4  *:80                  *:*                  
+www     nginx      65335 10 tcp6  *:80                  *:*                  
+www     nginx      65335 11 tcp4  *:443                 *:*                  
+www     nginx      65335 12 tcp6  *:443                 *:*                  
+root    nginx      52722  6 tcp4  *:80                  *:*                  
+root    nginx      52722 10 tcp6  *:80                  *:*                  
+root    nginx      52722 11 tcp4  *:443                 *:*                  
+root    nginx      52722 12 tcp6  *:443                 *:*                  
+root    sshd        1182  6 tcp6  *:22                  *:*                  
+root    sshd        1182  7 tcp4  *:22                  *:*                  
+unbound local-unbo   770  4 tcp6  [::1]:53              *:*                  
+unbound local-unbo   770  6 tcp4  127.0.0.1:53          *:*                  
+
+---port-check---
+Active Internet connections (including servers)
+Proto     Recv-Q Send-Q Local Address          Foreign Address        (state)    
+tcp4           0      0 *.22                   *.*                    LISTEN     
+tcp6           0      0 *.22                   *.*                    LISTEN     
+tcp4           0      0 127.0.0.1.53           *.*                    LISTEN     
+tcp6           0      0 ::1.53                 *.*                    LISTEN     
+tcp6           0      0 *.80                   *.*                    LISTEN     
+tcp4           0      0 *.80                   *.*                    LISTEN     
+tcp6           0      0 *.443                  *.*                    LISTEN     
+tcp4           0      0 *.443                  *.*                    LISTEN     

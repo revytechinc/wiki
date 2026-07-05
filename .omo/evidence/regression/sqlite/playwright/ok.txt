@@ -1,0 +1,8 @@
+URL: http://wikijs.cloudbsd.org:3000/
+HTTP status: 200
+Title: Wiki.js Setup
+Setup element count: 0
+Setup visible: false
+Body length: 797
+Screenshot bytes: 559380
+Captured at: 2026-07-05T21:48:50.591Z

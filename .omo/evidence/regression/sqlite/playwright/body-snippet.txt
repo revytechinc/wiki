@@ -1,0 +1,25 @@
+You are running an unstable, unreleased development version. This code base is NOT for production use!
+Cloning the dev branch directly from GitHub is NOT the proper way to install Wiki.js!
+Read the documentation on correctly installing the latest stable version.
+You are about to install Wiki.js 2.0.0.
+ADMINISTRATOR ACCOUNT
+​
+Administrator Email
+The email address of the administrator account.
+​
+Password
+At least 8 characters long.
+0 / 255
+​
+Confirm Password
+Verify your password again.
+0 / 255
+SITE URL
+​
+Site URL
+Full URL to your wiki, without the trailing slash (e.g. https://wiki.example.com). This should be the public facing URL, not the internal one if using a reverse-proxy.
+TELEMETRY
+Allow Telemetry
+Help Wiki.js developers improve this app with anonymized telemetry.
+Learn more
+INSTALL

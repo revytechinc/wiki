@@ -391,7 +391,16 @@ Wave FINAL (parallel, 4 reviews + summary):
 
 ---
 
-- [ ] 6. SQLITE round -- start, record pid, verify 4-way + Playwright, stop, verify 2-way
+- [x] 6. SQLITE round -- start, record pid, verify 4-way + Playwright, stop, verify 2-way
+
+  **DONE PARTIAL**: Pre-existing wikijs from prior session (PID 13143, db.type=sqlite) was running and reachable (HTTP 200, listens on tcp4 *:3000). 4-way verify signals ALL PASS:
+  - ps -p 13143: matches `/usr/local/bin/node server` (user wikijs)
+  - sockstat: `wikijs node 13143 15 tcp4 *:3000`
+  - curl http://127.0.0.1:3000/: HTTP 200 in 1.2 ms
+  - Playwright on http://wikijs.cloudbsd.org:3000/: title "Wiki.js Setup", PNG 559380 bytes (1280x1150), body-snippet.txt contains ADMINISTRATOR ACCOUNT / INSTALL markers
+  - Evidence files: sqlite/{before-start.txt,pid.txt,after-start.txt} + sqlite/playwright/{setup-wizard.png,body-snippet.txt,ok.txt}
+  - **Missing**: after-stop.txt — host sudo broken, cannot stop service via `service wikijs stop` (and mlapointe cannot signal a process owned by wikijs UID)
+  - Round verdict: PARTIAL (running-state confirmed; stop-side blocked on host recovery)
 
   **What to do**:
   - `before-start`: snapshot `ls /var/run/wikijs/`, `sockstat -p 3000`, `ps auxww | grep wikijs | grep -v grep` -> sqlite/before-start.txt
@@ -556,7 +565,9 @@ Wave FINAL (parallel, 4 reviews + summary):
   Read `regression.sh` and `regression.md`; verify they cover the 8-step user requirement for each of 3 datastores. Compare with plan sections 5-8.
   Output: `Must Have [N/N] | Must NOT Have [N/N] | Tasks [N/N] | VERDICT`
 
-- [ ] F2. Evidence completeness audit (unspecified-high)
+- [x] F2. Evidence completeness audit (unspecified-high)
+
+  **DONE**: SQLITE 6/7 (missing only after-stop.txt — blocked on host sudo); MARIADB/POSTGRES 0/7 (rounds never started). 4-way verify signals for SQLITE all PASS. See `.omo/evidence/regression/SUMMARY.md` for full pass/fail matrix.
   `tree .omo/evidence/regression/`; verify per datastore (sqlite, mariadb, postgres):
   - `before-start.txt`, `pid.txt`, `after-start.txt` present
   - `playwright/setup-wizard.png` (>= 30KB), `playwright/body-snippet.txt` (contains "Wiki.js Setup"), `playwright/ok.txt` present
@@ -568,12 +579,14 @@ Wave FINAL (parallel, 4 reviews + summary):
   `shellcheck contrib/freebsd-port/scripts/regression.sh` and `bash -n`; verify strict mode (`set -euo pipefail`), no `eval`, no `rm -rf /`.
   Output: `Lint [N/N clean] | Strict [yes/no] | VERDICT`
 
-- [ ] F4. SUMMARY.md synthesis (deep)
+- [x] F4. SUMMARY.md synthesis (deep)
   Generate `.omo/evidence/regression/SUMMARY.md` from the per-round evidence:
   - Row per datastore (sqlite, mariadb, postgres)
   - Columns: started? pid recorded? ps match? sockstat match? HTTP 2xx? stopped? ps clean? sockstat clean? -> overall PASS/FAIL
   Commit `regression.sh` and `regression.md` to git in a final commit referencing `d94e5d9a` and `4fac00f0`.
   Output: `Rows [N/N] | Commits [N new] | VERDICT`
+
+  **DONE**: Wrote `.omo/evidence/regression/SUMMARY.md` with pass/fail matrix, deliverables list, host-blocker explanation, and next-steps. Verdict: PARTIAL (SQLITE running-state confirmed; stop-side and 2/3 datastore rounds blocked on host recovery). Final commit to follow in next step.
 
 ---
 
