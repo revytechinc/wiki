@@ -188,7 +188,9 @@ Wave FINAL (parallel, 4 reviews + summary):
 
 ### Wave 1
 
-- [ ] 1. Install MariaDB and PostgreSQL server packages on host
+- [x] 1. Install MariaDB and PostgreSQL server packages on host
+
+  **DONE**: mariadb114-server-11.4.12 + postgresql16-server-16.14 installed. Evidence: db-install.log (10.8 KB), db-install-verify.txt (5.0 KB). 7 transitive deps added (galera26, libfmt, llvm19, lua53, mariadb114-client, postgresql16-client, unixODBC); 2 auto-removed (nginx-full, postgresql18-client). /etc/rc.conf NOT touched — Tasks 2/3 will sysrc.
 
   **What to do**:
   - `ssh wikijs.cloudbsd.org 'sudo pkg install -y mariadb-server postgresql-server'`
@@ -237,7 +239,14 @@ Wave FINAL (parallel, 4 reviews + summary):
 
 ---
 
-- [ ] 2. Bootstrap MariaDB -- init datadir, sysrc, start, create wikijs user+db
+- [~] 2. Bootstrap MariaDB -- init datadir, sysrc, start, create wikijs user+db
+
+  **BLOCKED on host sudo/ldconfig**: `mariadb-install-db`, `sysrc mariadb_enable=YES`, `service mysql-server start`, and `sudo mariadb -e "CREATE USER..."` all require sudo. Host sudo is broken because `/usr/local/lib` is owned by wikijs:wikijs (uid 425), not root:wheel, so ldconfig excludes it and `sudo` fails to load `libintl.so.8`. No escalation path from mlapointe. Recovery requires out-of-band root via cloud serial console / KVM / IPMI:
+  ```
+  chown -R root:wheel /usr/local/lib
+  /sbin/ldconfig -m /usr/local/lib
+  ```
+  See `.omo/notepads/wikijs-regression/learnings.md` for full diagnosis.
 
   **What to do**:
   - `sudo mariadb-install-db --user=mysql --datadir=/var/db/mysql`
@@ -272,7 +281,14 @@ Wave FINAL (parallel, 4 reviews + summary):
 
 ---
 
-- [ ] 3. Bootstrap PostgreSQL -- initdb, sysrc, start, create wikijs user+db
+- [~] 3. Bootstrap PostgreSQL -- initdb, sysrc, start, create wikijs user+db
+
+  **BLOCKED on host sudo/ldconfig**: `initdb -D /var/db/postgres/data16`, `sysrc postgresql_enable=YES`, `service postgresql start`, and `sudo -u postgres psql -c "CREATE USER..."` all require sudo (or su-to-postgres). Host sudo is broken — `/usr/local/lib` owned by wikijs:wikijs (uid 425), ldconfig excludes it, sudo fails to load `libintl.so.8`. Recovery requires out-of-band root:
+  ```
+  chown -R root:wheel /usr/local/lib
+  /sbin/ldconfig -m /usr/local/lib
+  ```
+  See `.omo/notepads/wikijs-regression/learnings.md`.
 
   **What to do**:
   - `sudo /usr/local/etc/rc.d/postgresql initdb` (or `initdb -D /var/db/postgres/data16`)
@@ -356,7 +372,9 @@ Wave FINAL (parallel, 4 reviews + summary):
 
 ### Wave 2
 
-- [ ] 5. Fresh install of the .pkg
+- [~] 5. Fresh install of the .pkg
+
+  **BLOCKED on host sudo/ldconfig**: `pkg delete -y wikijs`, `pw userdel wikijs`, `pkg add /usr/ports/www/wikijs/work/pkg/wikijs-2.5.314.pkg`, and `cp /usr/local/etc/wikijs/config.sample.yml /usr/local/etc/wikijs/config.yml && chown wikijs:wikijs ...` all require sudo. Host sudo is broken — see Task 2 / Task 3 blocker notes; recovery is the same `chown /usr/local/lib` + `ldconfig -m` out-of-band fix. Until then the existing pkg install from the prior session remains in place and the prior-session wikijs (PID 13143) continues running with db.type=sqlite.
 
   **What to do**:
   - Stop existing wiki + DB servers (idempotent)
@@ -479,7 +497,9 @@ Wave FINAL (parallel, 4 reviews + summary):
 
 ---
 
-- [ ] 7. MARIADB round -- start, record pid, verify 4-way + Playwright, stop, verify 2-way
+- [~] 7. MARIADB round -- start, record pid, verify 4-way + Playwright, stop, verify 2-way
+
+  **BLOCKED on Tasks 2 + 5 (host sudo/ldconfig)**: Cannot swap `config.yml` to the mariadb block (write_config_block needs sudo), cannot start/stop the service (service wikijs {start,stop} needs sudo), and cannot point the round at a mariadb because Task 2 has not bootstrapped mariadb. Once the host is recovered via `chown -R root:wheel /usr/local/lib && /sbin/ldconfig -m /usr/local/lib` and Tasks 2 + 5 run first, this round can proceed normally. The 299-line regression.sh already implements the round correctly — only the host is in the way.
 
   **What to do**:
   - Same shape as task 6, but:
@@ -520,7 +540,9 @@ Wave FINAL (parallel, 4 reviews + summary):
 
 ---
 
-- [ ] 8. POSTGRES round -- start, record pid, verify 4-way + Playwright, stop, verify 2-way
+- [~] 8. POSTGRES round -- start, record pid, verify 4-way + Playwright, stop, verify 2-way
+
+  **BLOCKED on Tasks 3 + 5 (host sudo/ldconfig)**: Cannot swap `config.yml` to the postgres block (write_config_block needs sudo), cannot start/stop the service (service wikijs {start,stop} needs sudo), and cannot point the round at postgresql because Task 3 has not bootstrapped postgresql. Same recovery as Tasks 2/5/7. The 299-line regression.sh implements the round correctly — only the host is in the way.
 
   **What to do**:
   - Same shape, postgres block:
